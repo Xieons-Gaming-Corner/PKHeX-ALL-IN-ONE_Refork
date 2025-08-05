@@ -32,9 +32,12 @@ public sealed class PIDVerifier : Verifier
         VerifyShiny(data);
     }
 
+    /// <summary>
+    /// Verifies the legality of the EncryptionConstant (PID) for Generation 3 and 4 egg encounters, flagging suspicious or invalid values and checking gender consistency when applicable.
+    /// </summary>
     private static void VerifyEggPID(LegalityAnalysis data, PKM pk, IEncounterEgg egg)
     {
-        if (egg is EncounterEgg4)
+        if (egg is EncounterEgg4 e4)
         {
             // Gen4 Eggs are "egg available" based on the stored PID value in the save file.
             // If this value is 0 or is generated as 0 (possible), the game will see "false" and no egg is available.
@@ -45,15 +48,15 @@ public sealed class PIDVerifier : Verifier
             if (pk.EncryptionConstant == 0)
                 data.AddLine(Get(CheckIdentifier.EC, Severity.Fishy, PIDEncryptZero));
 
-            if (Breeding.IsGenderSpeciesDetermination(egg.Species))
+            if (Breeding.IsGenderSpeciesDetermination(e4.Species))
                 VerifyEggGender8000(data, pk);
         }
-        else if (egg is EncounterEgg3)
+        else if (egg is EncounterEgg3 e3)
         {
-            if (!Daycare3.IsValidProcPID(pk.EncryptionConstant, egg.Version))
+            if (!Daycare3.IsValidProcPID(pk.EncryptionConstant, e3.Version))
                 data.AddLine(Get(CheckIdentifier.EC, Severity.Invalid, PIDEncryptZero));
 
-            if (Breeding.IsGenderSpeciesDetermination(egg.Species))
+            if (Breeding.IsGenderSpeciesDetermination(e3.Species))
                 VerifyEggGender8000(data, pk);
             // PID and IVs+Inheritance randomness is sufficiently random; any permutation of vBlank correlations is possible.
         }
@@ -68,6 +71,10 @@ public sealed class PIDVerifier : Verifier
             data.AddLine(GetInvalid(CheckIdentifier.EC, PIDGenderMismatch));
     }
 
+    /// <summary>
+    /// Validates the shiny status and PID-related properties of the Pokémon against encounter-specific rules.
+    /// </summary>
+    /// <param name="data">The legality analysis context containing the Pokémon and encounter information.</param>
     private void VerifyShiny(LegalityAnalysis data)
     {
         var pk = data.Entity;
